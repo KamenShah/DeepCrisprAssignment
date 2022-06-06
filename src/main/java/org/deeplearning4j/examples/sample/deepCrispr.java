@@ -5,7 +5,8 @@
  *
  * This is an implementation of DeepCrispr in DeepLearning4j
  * Data is read in through numpy files using the ND4J library
- * A t
+ * The model is then trained and evaluated
+ * Visualization can be seen at http://localhost:9000
  ******************************************************************************/
 package org.deeplearning4j.examples.sample;
 
@@ -48,7 +49,7 @@ public class deepCrispr {
     public static void main(String[] args) throws Exception {
         int batchSize = 64; // Batch size
         int nEpochs = 10; // Number of training epochs
-        int seed = 123; //
+        int seed = 123; // random seed
 
         /*
             Create an iterator using the batch size for one iteration
@@ -65,11 +66,9 @@ public class deepCrispr {
         final List<DataSet> trainList = allDataTrain.asList();
         final DataSetIterator trainIterator = new ListDataSetIterator<>(trainList,batchSize);
 
+		// Create dataset iterators
         final List<DataSet> testList = allDataTest.asList();
         final DataSetIterator testIterator = new ListDataSetIterator<>(testList,batchSize);
-
-        // DataSetIterator train_set_iterator  = new INDArrayDataSetIterator(train_X, train_y, batchSize);
-        // DataSetIterator test_set_iterator  = new INDArrayDataSetIterator(test_X, test_y, batchSize);
 
         /*
             Construct the neural network
@@ -84,8 +83,9 @@ public class deepCrispr {
 		.weightInit(WeightInit.XAVIER)
 		.updater(new Adam(1e-3))
 		.list()
+		//Using kernel size of (1,3) for every layer
 		.layer(new ConvolutionLayer.Builder(1, 3)
-				//nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
+				//nIn defines number of channels
 				.nIn(8)
 				.stride(1,1)
 				.nOut(32)
@@ -93,43 +93,37 @@ public class deepCrispr {
 				.build())
 		.layer(new BatchNormalization.Builder().nOut(32).build())
 		.layer(new ConvolutionLayer.Builder(1, 3)
-				//nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
 				.stride(1,1)
 				.nOut(64)
 				.activation(Activation.IDENTITY)
 				.build())
 		.layer(new BatchNormalization.Builder().nOut(64).build())
 		.layer(new ConvolutionLayer.Builder(1, 3)
-				//nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
 				.stride(1,1)
 				.nOut(64)
 				.activation(Activation.IDENTITY)
 				.build())
 		.layer(new BatchNormalization.Builder().nOut(64).build())
 		.layer(new ConvolutionLayer.Builder(1, 3)
-				//nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
 				.stride(1,1)
 				.nOut(256)
 				.activation(Activation.IDENTITY)
 				.build())
 		.layer(new BatchNormalization.Builder().nOut(256).build())		
 		.layer(new ConvolutionLayer.Builder(1, 3)
-				//nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
 				.stride(1,1)
 				.nOut(256)
 				.activation(Activation.IDENTITY)
 				.build())
 		.layer(new BatchNormalization.Builder().nOut(256).build())		
-		//Decode network
+		//Classification network
 		.layer(new ConvolutionLayer.Builder(1, 3)
-				//nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
 				.stride(2, 2)
 				.nOut(512)
 				.activation(Activation.IDENTITY)
 				.build())
 		.layer(new BatchNormalization.Builder().nOut(256).build())		
 		.layer(new ConvolutionLayer.Builder(1, 3)
-				//nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
 				.stride(1,1)
 				.nOut(512)
 				.activation(Activation.IDENTITY)
@@ -143,12 +137,11 @@ public class deepCrispr {
 				.build())
 		.layer(new BatchNormalization.Builder().nOut(256).build())		
 		.layer(new ConvolutionLayer.Builder(1, 1)
-				//nIn and nOut specify depth. nIn here is the nChannels and nOut is the number of filters to be applied
 				.stride(1,1)
-				.nOut(2)
+				.nOut(2) // Number of output classes
 				.activation(Activation.IDENTITY)
 				.build())
-				
+		// Defining loss function		
 		.layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
 			.name("output")
 			.nOut(2)
@@ -158,20 +151,7 @@ public class deepCrispr {
 		.setInputType(InputType.convolutional(1, 23, 8))
 		.build();
 
-        /*
-        Regarding the .setInputType(InputType.convolutionalFlat(28,28,1)) line: This does a few things.
-        (a) It adds preprocessors, which handle things like the transition between the convolutional/subsampling layers
-            and the dense layer
-        (b) Does some additional configuration validation
-        (c) Where necessary, sets the nIn (number of input neurons, or input depth in the case of CNNs) values for each
-            layer based on the size of the previous layer (but it won't override values manually set by the user)
-
-        InputTypes can be used with other layer types too (RNNs, MLPs etc) not just CNNs.
-        For normal images (when using ImageRecordReader) use InputType.convolutional(height,width,depth).
-        MNIST record reader is a special case, that outputs 28x28 pixel grayscale (nChannels=1) images, in a "flattened"
-        row vector format (i.e., 1x784 vectors), hence the "convolutionalFlat" input type used here.
-        */
-
+		// Starting UI server
         UIServer uiServer = UIServer.getInstance();
 
         StatsStorage statsStorage = new InMemoryStatsStorage();         //Alternative: new FileStatsStorage(File), for saving and loading later
@@ -179,13 +159,13 @@ public class deepCrispr {
         uiServer.attach(statsStorage);
 
 
-
+		// Defining and initializing model
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
 
 
 
-
+		// Train & evaluate
         log.info("Train model...");
         model.setListeners(new ScoreIterationListener(10), new EvaluativeListener(testIterator, 1, InvocationType.EPOCH_END)); //Print score every 10 iterations and evaluate on test set every epoch
         
