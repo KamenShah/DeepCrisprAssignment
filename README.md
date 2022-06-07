@@ -1,4 +1,4 @@
-# DeepCrisprAssignment
+# DeepCRISPR Assignment for CSC 570 - Cal Poly San Luis Obispo
 DeepCrispr implementation in DeepLearning4J
 
 
