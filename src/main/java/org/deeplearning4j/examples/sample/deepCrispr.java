@@ -38,6 +38,7 @@ import org.deeplearning4j.ui.api.UIServer;
 import org.deeplearning4j.core.storage.StatsStorage;
 import org.deeplearning4j.ui.model.storage.InMemoryStatsStorage;
 import org.deeplearning4j.ui.model.stats.StatsListener;
+import org.nd4j.evaluation.classification.ROC;
 
 
 import java.io.File;
@@ -48,7 +49,8 @@ public class deepCrispr {
 
     public static void main(String[] args) throws Exception {
         int batchSize = 64; // Batch size
-        int nEpochs = 10; // Number of training epochs
+        int nEpochs = 10
+		; // Number of training epochs
         int seed = 123; // random seed
 
         /*
@@ -167,19 +169,25 @@ public class deepCrispr {
 
 		// Train & evaluate
         log.info("Train model...");
-        model.setListeners(new ScoreIterationListener(10), new EvaluativeListener(testIterator, 1, InvocationType.EPOCH_END)); //Print score every 10 iterations and evaluate on test set every epoch
+        model.setListeners(new ScoreIterationListener(1), new EvaluativeListener(testIterator, 1, InvocationType.EPOCH_END)); //Print score every 10 iterations and evaluate on test set every epoch
         
         model.setListeners(new StatsListener(statsStorage));
 
         model.fit(trainIterator, nEpochs);
 
+		testIterator.reset();
+
         Evaluation eval = model.evaluate(testIterator);
 
         log.info(eval.stats());
 
+		testIterator.reset();
 
-        // int roc = model.evaluateROC(testIterator);
+        ROC r  = model.evaluateROC(testIterator);
 
+		testIterator.reset();
+
+		log.info("ROC-AUC score of: " + String.valueOf(r.calculateAUC() ));
 
         log.info("****************Example finished********************");
     }
