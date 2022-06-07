@@ -1,5 +1,5 @@
 # DeepCrisprAssignment
-DeepCrispr implmentation in DeepLearning4J
+DeepCrispr implementation in DeepLearning4J
 
 
 ## Requirement
