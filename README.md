@@ -10,9 +10,9 @@ DeepCrispr implementation in DeepLearning4J
 
 1. Clone the repository
    * git clone https://github.com/KamenShah/DeepCrisprAssignment
-3. cd /DeepCrisprAssignment
+   * cd /DeepCrisprAssignment
 4. Compile and build Java uber jar file
    * mvn package
-6. cd /target
+   * cd /target
 7. Run model
-  * java -cp .\deeplearning4j-example-sample-1.0.0-M2-bin.jar org.deeplearning4j.examples.sample.deepCrispr
+   * java -cp .\deeplearning4j-example-sample-1.0.0-M2-bin.jar org.deeplearning4j.examples.sample.deepCrispr
